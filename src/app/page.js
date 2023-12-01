@@ -1,95 +1,137 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+import express, { response } from 'express';
+import { MongoClient } from 'mongodb';
+import axios from 'axios';
 
 export default function Home() {
-  return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
+  
+const app=express();
+const PORT=5001;
+const uri='mongodb+srv://rakesh:185d1a0151@project.phg7vjo.mongodb.net/Adsgoat?retryWrites=true&w=majority';
+const client=new MongoClient(uri,{ useNewUrlParser: true, useUnifiedTopology: true });
 
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
 
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
+const startServer = async ()=>{
+    try{
+        app.listen(PORT,()=>{
+        console.log("Server is Connected",`${PORT}`)
+    })
+    }catch(e){
+        console.error("Server is not connected",e)
+    }
+}
+startServer()
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
 
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
 
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+app.post('/ads/rakesh',(req,res)=>{
+    function generateRandomToken(length) {
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let token = '';
+      
+        for (let i = 0; i < length; i++) {
+          const randomIndex = Math.floor(Math.random() * characters.length);
+        //   console.log(Math.random()*characters.length)
+          token += characters.charAt(randomIndex);
+        }
+        res.status(200).json(token)
+        return token;
+      }
+      
+      const randomToken = generateRandomToken(164);
+      // console.log(randomToken);
+
+});
+
+
+
+async function Storingtoken(){
+  // const response = await axios.post(`http://localhost:${PORT}/ads/rakesh`);
+  //     console.log(response.data)
+  //    const  token3=response.data
+  const token3 = "NrayRSNFGik9YUhWx5zkCGKo4dpne8aL4MKVZxBmpPFliFKOhzK6mT4BKXdAcIPa8fzqfZbYmXRORip9iDTnIwIQobZRX1wnWeFxtSH3Tz1cD0nOKtJYdIEutON9UXTcutVSXjFAdE000ayPGtU9FpBDawlPMoJSbT94";
+
+  try {
+    await client.connect();
+    await client.db('TestData').collection('Modified_Token').deleteMany();
+    const database1 = await client.db('TestData').collection('Modified_Token').insertOne({ token: token3 });
+
+    // console.log(database1);
+  } catch(error){
+    console.error("Database not connected")
+  }finally{
+    await client.close();
+  }
+  
+}
+
+
+
+async function Authentication(req, res, next) {
+  // Storingtoken()
+  try {
+    await client.connect();
+      const database2 = await client.db('TestData').collection('Modified_Token').find().toArray();
+      const token=database2[0].token
+      console.log(token);
+      const token1=req.headers.authorization
+      let  token2=""
+      if (token1===""){
+        res.status(400).json("enter Token")
+        res.end();
+
+      }else{
+         token2=token1.split(" ")[1]
+            }
+      // console.log(token1)
+      
+  if(token===token2){
+      if (!token) {
+        console.log("Token is invalid.");
+        res.status(401).json({ error: "Authentication failed" });
+      } else {
+        console.log("Token is Valid!");
+        req.token = token2;
+        next();
+        
+      }
+    } else{
+      console.log("enter valid token")
+      res.status(400).json("Enter Valid Token")
+        res.end();
+    }
+  }catch (error) {
+      console.error('Error fetching token:', error.message);
+      res.status(400).json({ error: "Enter Valid Token" });
+    }
+   
+  }
+
+
+
+
+
+app.get("/ads/result", Authentication, async (req, res) => {
+ 
+    try {      
+      const database = client.db('TestData').collection('Tonic_Daily').find().toArray();
+      if(!database){
+        console.log("Database is not connected")
+      }else{
+        const data = await database;
+        res.json(data);
+        console.log("Fetched Data:",data.length)
+
+        
+      }
+    } catch (err) {
+      res.status(400).json(err);
+      console.error("Error", err);
+    }finally{
+      await client.close();
+      console.log("db closed")
+    }
+  });
+  
+
+  
 }

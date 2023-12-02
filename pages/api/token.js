@@ -1,5 +1,4 @@
 
-// pages/api/ads.js
 import { MongoClient } from 'mongodb';
 
 export default async function handler(req, res) {
@@ -10,7 +9,7 @@ export default async function handler(req, res) {
     await client.connect();
 
     if (req.method === 'POST') {
-      // Handle POST request for generating random token and storing it
+     
     //   const token = generateRandomToken(164);
     const token="NrayRSNFGik9YUhWx5zkCGKo4dpne8aL4MKVZxBmpPFliFKOhzK6mT4BKXdAcIPa8fzqfZbYmXRORip9iDTnIwIQobZRX1wnWeFxtSH3Tz1cD0nOKtJYdIEutON9UXTcutVSXjFAdE000ayPGtU9FpBDawlPMoJSbT94"
       await client.db('TestData').collection('Modified_Token').deleteMany();
